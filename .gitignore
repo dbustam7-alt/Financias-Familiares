@@ -1,0 +1,9 @@
+# Verificador de archivos para GIT
+node_modules/
+.DS_Store
+*.log
+.env
+supabase_keys.txt
+config.json
+.vscode/
+.gemini/
