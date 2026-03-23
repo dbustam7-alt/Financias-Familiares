@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Financiero Personal</title>
+    <link rel="stylesheet" href="index.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i data-lucide="wallet" class="logo-icon"></i>
+                <span>Finanzas</span>
+            </div>
+            <nav id="sidebar-nav">
+                <a href="#" class="active" data-view="dashboard"><i data-lucide="layout-dashboard"></i> Dashboard</a>
+                <a href="#" data-view="ingresos"><i data-lucide="arrow-up-right"></i> Ingresos</a>
+                <a href="#" data-view="gastos"><i data-lucide="arrow-down-left"></i> Gastos</a>
+                <a href="#" data-view="tarjetas"><i data-lucide="credit-card"></i> Tarjetas</a>
+                <a href="#" data-view="configuraciones"><i data-lucide="settings"></i> Ajustes</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-info">
+                    <h1>Control de Finanzas</h1>
+                    <div class="profile-filter" id="profile-selector">
+                        <button class="filter-btn active" data-filter="familia">Familia</button>
+                        <button class="filter-btn" data-filter="laura">Laura</button>
+                        <button class="filter-btn" data-filter="david">David</button>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button id="quick-add-btn" class="btn btn-primary">
+                        <i data-lucide="plus"></i> Registro Rápido
+                    </button>
+                </div>
+            </header>
+
+            <!-- View: Dashboard -->
+            <div id="view-dashboard" class="view active">
+                <!-- Summary Cards -->
+                <section class="summary-section">
+                    <div class="card card-summary income">
+                        <div class="card-icon"><i data-lucide="trending-up"></i></div>
+                        <div class="card-data">
+                            <span class="label">Ingresos Totales</span>
+                            <h2 id="total-income">$0</h2>
+                        </div>
+                    </div>
+                    <div class="card card-summary expenses">
+                        <div class="card-icon"><i data-lucide="trending-down"></i></div>
+                        <div class="card-data">
+                            <span class="label">Gastos Totales</span>
+                            <h2 id="total-expenses">$0</h2>
+                        </div>
+                    </div>
+                    <div class="card card-summary balance highlighted">
+                        <div class="card-icon"><i data-lucide="banknote"></i></div>
+                        <div class="card-data">
+                            <span class="label">Dinero Disponible</span>
+                            <h2 id="available-balance">$0</h2>
+                        </div>
+                    </div>
+                    <div class="card card-summary alert-hormiga">
+                        <div class="card-icon"><i data-lucide="alert-circle"></i></div>
+                        <div class="card-data">
+                            <span class="label">Gasto Hormiga</span>
+                            <h2 id="hormiga-total">$0</h2>
+                            <span class="status-badge" id="hormiga-status">Bajo control</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Main Grid -->
+                <section class="dashboard-grid">
+                    <!-- Budget vs Actual Chart/List -->
+                    <div class="card card-large">
+                        <div class="card-header">
+                            <h3>Presupuesto vs Real</h3>
+                            <div class="card-header-actions">
+                                <select id="month-filter">
+                                    <option value="current">Marzo 2026</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="budget-list" id="budget-visualization">
+                            <!-- Items will be injected by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Recent Transactions -->
+                    <div class="card card-small">
+                        <div class="card-header">
+                            <h3>Transacciones Recientes</h3>
+                            <a href="#" class="view-all">Ver todas</a>
+                        </div>
+                        <div class="transaction-list" id="recent-transactions">
+                            <!-- Items will be injected by JS -->
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- View: Ingresos (Placeholder) -->
+            <div id="view-ingresos" class="view">
+                <div class="card">
+                    <h2>Detalle de Ingresos</h2>
+                    <p class="subtitle">Administra tus salarios y otros ingresos.</p>
+                    <div class="transaction-list" id="ingresos-full-list"></div>
+                </div>
+            </div>
+
+            <!-- Vista: Ajustes -->
+            <div id="view-configuraciones" class="view">
+                <h2>Configuración del Sistema</h2>
+                <p class="subtitle">Personaliza tus categorías, límites y perfiles</p>
+
+                <div class="settings-grid">
+                    <!-- Sección: Topes (Presupuestos) -->
+                    <div class="card settings-card">
+                        <div class="card-header">
+                            <h3>Gestión de Topes (Presupuestos)</h3>
+                        </div>
+                        <div id="settings-budgets-list" class="settings-list">
+                            <!-- JS Renders list here -->
+                        </div>
+                        <form id="add-budget-form" class="settings-mini-form">
+                            <select id="new-budget-owner" required>
+                                <option value="familia">Familia</option>
+                                <option value="laura">Laura</option>
+                                <option value="david">David</option>
+                            </select>
+                            <select id="new-budget-cat" required>
+                                <option value="fijo">Fijo</option>
+                                <option value="variable">Variable</option>
+                                <option value="hormiga">Hormiga</option>
+                            </select>
+                            <input type="number" id="new-budget-limit" placeholder="Límite ($)" required>
+                            <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
+                        </form>
+                    </div>
+
+                    <!-- Sección: Categorías -->
+                    <div class="card settings-card">
+                        <div class="card-header">
+                            <h3>Categorías</h3>
+                        </div>
+                        <div id="settings-categories-list" class="settings-list">
+                            <!-- JS Renders list here -->
+                        </div>
+                        <form id="add-category-form" class="settings-mini-form">
+                            <input type="text" id="new-cat-name" placeholder="Nombre de categoría" required>
+                            <input type="text" id="new-cat-id" placeholder="ID (slug)" required>
+                            <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Sección: Métodos de Pago y Perfiles -->
+                <div class="card settings-card">
+                    <div class="card-header">
+                        <h3>Opciones del Sistema</h3>
+                    </div>
+                    <div class="settings-subgrid">
+                        <div>
+                            <h4>Métodos de Pago</h4>
+                            <div id="settings-pago-list" class="settings-list"></div>
+                            <form id="add-payment-form" class="settings-mini-form">
+                                <input type="text" id="new-pay-name" placeholder="Nombre" required>
+                                <input type="text" id="new-pay-id" placeholder="ID (slug)" required>
+                                <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
+                            </form>
+                        </div>
+                        <div>
+                            <h4>Propietarios</h4>
+                            <div id="settings-owner-list" class="settings-list"></div>
+                            <form id="add-owner-form" class="settings-mini-form">
+                                <input type="text" id="new-owner-name" placeholder="Nombre" required>
+                                <input type="text" id="new-owner-id" placeholder="ID (slug)" required>
+                                <button type="submit" class="btn btn-primary btn-sm">Agregar</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+
+    <!-- View: Gastos (Placeholder) -->
+    <div id="view-gastos" class="view">
+        <div class="card">
+            <h2>Detalle de Gastos</h2>
+            <p class="subtitle">Lista completa de gastos fijos y variables.</p>
+            <div class="transaction-list" id="gastos-full-list"></div>
+        </div>
+    </div>
+
+    <!-- View: Tarjetas (Placeholder) -->
+    <div id="view-tarjetas" class="view">
+        <div class="card">
+            <h2>Manejo de Tarjetas</h2>
+            <p class="subtitle">Control específico de TC Visa y TC Falabella.</p>
+            <div class="cards-status-grid" id="cards-visualization"></div>
+        </div>
+    </div>
+
+    </main>
+
+    <!-- Bottom Navigation (Mobile Only) -->
+    <nav class="bottom-nav">
+        <a href="#" class="active" data-view="dashboard">
+            <i data-lucide="layout-dashboard"></i>
+            <span>Inicio</span>
+        </a>
+        <a href="#" data-view="ingresos">
+            <i data-lucide="arrow-up-right"></i>
+            <span>Ingresos</span>
+        </a>
+        <a href="#" data-view="gastos">
+            <i data-lucide="arrow-down-left"></i>
+            <span>Gastos</span>
+        </a>
+        <a href="#" data-view="configuraciones">
+            <i data-lucide="settings"></i>
+            <span>Ajustes</span>
+        </a>
+    </nav>
+    </div>
+
+    <!-- Quick Add Modal (Hidden by default) -->
+    <div id="quick-add-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Registro</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="transaction-form" class="transaction-form">
+                <div class="form-group row">
+                    <button type="button" class="type-btn active" data-type="expense">Gasto</button>
+                    <button type="button" class="type-btn" data-type="income">Ingreso</button>
+                </div>
+                <div class="form-group">
+                    <label>¿Cuánto fue?</label>
+                    <input type="number" id="amount" placeholder="$0.00" required>
+                </div>
+                <div class="form-group">
+                    <label>¿En qué?</label>
+                    <input type="text" id="description" placeholder="Ej. Tinto, Mercado, Arriendo..." required>
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="category" required>
+                        <option value="fijo">Gasto Fijo</option>
+                        <option value="variable">Gasto Variable</option>
+                        <option value="hormiga">Gasto Hormiga</option>
+                        <option value="ingreso">Ingreso</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Método de Pago</label>
+                    <select id="payment-method">
+                        <option value="cash">Efectivo</option>
+                        <option value="debito">Débito / Cuenta</option>
+                        <option value="tc_visa">TC Visa</option>
+                        <option value="tc_falabella">TC Falabella</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>¿A quién pertenece?</label>
+                    <select id="owner" required>
+                        <option value="familia">Familia (Compartido)</option>
+                        <option value="laura">Laura (Personal)</option>
+                        <option value="david">David (Personal)</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-full">Guardar Registro</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Initialize icons
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
