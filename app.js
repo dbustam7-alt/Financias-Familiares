@@ -702,9 +702,9 @@ function attachEventListeners() {
     });
 }
 
-// Version: 1.0.5 - Emergency Diagnostic
-console.log('Iniciando script v1.0.5...');
-alert('Iniciando app v1.0.5...');
+// Version: 1.0.6 - Final Sync Diagnostic
+console.log('Iniciando script v1.0.6...');
+alert('Iniciando app v1.0.6...');
 
 // Final safety execution
 try {
