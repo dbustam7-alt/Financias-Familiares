@@ -61,44 +61,52 @@ let configuration = {
 };
 
 /**
- * UI Selectors
+ * UI Selectors & Initialization
  */
-const elements = {
-    totalIncome: document.getElementById('total-income'),
-    totalExpenses: document.getElementById('total-expenses'),
-    availableBalance: document.getElementById('available-balance'),
-    hormigaTotal: document.getElementById('hormiga-total'),
-    hormigaStatus: document.getElementById('hormiga-status'),
-    budgetList: document.getElementById('budget-visualization'),
-    transactionList: document.getElementById('recent-transactions'),
-    ingresosList: document.getElementById('ingresos-full-list'),
-    gastosList: document.getElementById('gastos-full-list'),
-    cardsList: document.getElementById('cards-visualization'),
-    sidebarLinks: document.querySelectorAll('#sidebar-nav a'),
-    views: document.querySelectorAll('.view'),
-    profileSelector: document.getElementById('profile-selector'),
-    profileButtons: document.querySelectorAll('.filter-btn'),
-    modal: document.getElementById('quick-add-modal'),
-    addBtn: document.getElementById('quick-add-btn'),
-    closeBtn: document.querySelector('.close-modal'),
-    dateInput: document.getElementById('date'),
-    modalTitle: document.getElementById('modal-title'),
-    editingIdInput: document.getElementById('editing-id'),
-    form: document.getElementById('transaction-form'),
-    // Settings elements
-    settingsBudgets: document.getElementById('settings-budgets-list'),
-    settingsCategories: document.getElementById('settings-categories-list'),
-    settingsPayments: document.getElementById('settings-pago-list'),
-    settingsOwners: document.getElementById('settings-owner-list'),
-    addBudgetForm: document.getElementById('add-budget-form'),
-    addCatForm: document.getElementById('add-category-form'),
-    addPayForm: document.getElementById('add-payment-form'),
-    addOwnerForm: document.getElementById('add-owner-form'),
-    bottomLinks: document.querySelectorAll('.bottom-nav a'),
-    confirmModal: document.getElementById('confirm-modal'),
-    confirmDeleteBtn: document.getElementById('confirm-delete'),
-    confirmCancelBtn: document.getElementById('confirm-cancel')
-};
+let elements = {};
+
+function initializeElements() {
+    elements = {
+        totalIncome: document.getElementById('total-income'),
+        totalExpenses: document.getElementById('total-expenses'),
+        availableBalance: document.getElementById('available-balance'),
+        hormigaTotal: document.getElementById('hormiga-total'),
+        hormigaStatus: document.getElementById('hormiga-status'),
+        budgetList: document.getElementById('budget-visualization'),
+        transactionList: document.getElementById('recent-transactions'),
+        ingresosList: document.getElementById('ingresos-full-list'),
+        gastosList: document.getElementById('gastos-full-list'),
+        cardsList: document.getElementById('cards-visualization'),
+        sidebarLinks: document.querySelectorAll('#sidebar-nav a'),
+        views: document.querySelectorAll('.view'),
+        profileSelector: document.getElementById('profile-selector'),
+        profileButtons: document.querySelectorAll('.filter-btn'),
+        modal: document.getElementById('quick-add-modal'),
+        addBtn: document.getElementById('quick-add-btn'),
+        closeBtn: document.querySelector('.close-modal'),
+        dateInput: document.getElementById('date'),
+        modalTitle: document.getElementById('modal-title'),
+        editingIdInput: document.getElementById('editing-id'),
+        form: document.getElementById('transaction-form'),
+        settingsBudgets: document.getElementById('settings-budgets-list'),
+        settingsCategories: document.getElementById('settings-categories-list'),
+        settingsPayments: document.getElementById('settings-pago-list'),
+        settingsOwners: document.getElementById('settings-owner-list'),
+        addBudgetForm: document.getElementById('add-budget-form'),
+        addCatForm: document.getElementById('add-category-form'),
+        addPayForm: document.getElementById('add-payment-form'),
+        addOwnerForm: document.getElementById('add-owner-form'),
+        bottomLinks: document.querySelectorAll('.bottom-nav a'),
+        confirmModal: document.getElementById('confirm-modal'),
+        confirmDeleteBtn: document.getElementById('confirm-delete'),
+        confirmCancelBtn: document.getElementById('confirm-cancel')
+    };
+
+    // Safety check: ensure critical elements exist
+    if (!elements.addBtn || !elements.transactionList) {
+        throw new Error('No se encontraron elementos críticos del DOM.');
+    }
+}
 
 /**
  * Supabase Data Integration
@@ -510,213 +518,8 @@ function renderTransactions() {
     if (window.lucide) lucide.createIcons();
 }
 
-/**
- * Event Listeners
- */
-elements.addBtn.addEventListener('click', () => {
-    editingId = null;
-    elements.modalTitle.textContent = 'Nuevo Registro';
-    elements.editingIdInput.value = '';
-    elements.form.reset();
-    elements.modal.style.display = 'block';
-    // Set default date to today
-    const today = new Date().toISOString().split('T')[0];
-    elements.dateInput.value = today;
-});
 
-elements.closeBtn.addEventListener('click', () => {
-    elements.modal.style.display = 'none';
-});
 
-window.onclick = (event) => {
-    if (event.target == elements.modal) elements.modal.style.display = 'none';
-};
-
-// Unified Navigation Logic
-const navLinks = [...elements.sidebarLinks, ...elements.bottomLinks];
-
-navLinks.forEach(link => {
-    link.addEventListener('click', (e) => {
-        e.preventDefault();
-        const targetView = link.dataset.view;
-
-        // Update link UI (both sidebar and bottom nav)
-        navLinks.forEach(l => {
-            if (l.dataset.view === targetView) {
-                l.classList.add('active');
-            } else {
-                l.classList.remove('active');
-            }
-        });
-
-        // Switch views
-        elements.views.forEach(view => {
-            view.classList.remove('active');
-            if (view.id === `view-${targetView}`) {
-                view.classList.add('active');
-            }
-        });
-
-        // Specific view renders
-        if (targetView === 'tarjetas') renderTarjetas();
-        if (targetView === 'ingresos' || targetView === 'gastos') renderFullLists();
-        if (targetView === 'configuraciones') renderSettings();
-    });
-});
-
-// Settings Handlers
-elements.addBudgetForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const owner = document.getElementById('new-budget-owner').value;
-    const catId = document.getElementById('new-budget-cat').value;
-    const limit = parseFloat(document.getElementById('new-budget-limit').value);
-    const catName = configuration.categories.find(c => c.id === catId).name;
-
-    budgets[owner].push({
-        id: Date.now(),
-        category: catId,
-        limit: limit,
-        name: `Gastos ${catName} ${owner.charAt(0).toUpperCase() + owner.slice(1)}`
-    });
-
-    renderSettings();
-    renderBudgets();
-    updateSummary();
-    elements.addBudgetForm.reset();
-});
-
-elements.addCatForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const id = document.getElementById('new-cat-id').value;
-    const name = document.getElementById('new-cat-name').value;
-    configuration.categories.push({ id, name });
-    renderSettings();
-    populateFormSelects();
-    elements.addCatForm.reset();
-});
-
-elements.addPayForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const id = document.getElementById('new-pay-id').value;
-    const name = document.getElementById('new-pay-name').value;
-    configuration.paymentMethods.push({ id, name });
-    renderSettings();
-    populateFormSelects();
-    elements.addPayForm.reset();
-});
-
-elements.addOwnerForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const id = document.getElementById('new-owner-id').value;
-    const name = document.getElementById('new-owner-name').value;
-    configuration.owners.push({ id, name });
-    if (!budgets[id]) budgets[id] = [];
-    updateHeaderFilters();
-    renderSettings();
-    populateFormSelects();
-    elements.addOwnerForm.reset();
-});
-
-// Profile Filter Switcher
-elements.profileButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        elements.profileButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeFilter = btn.dataset.filter;
-
-        // Refresh currently active view
-        updateSummary();
-        renderBudgets();
-        renderTransactions();
-        renderTarjetas();
-        renderFullLists();
-    });
-});
-
-// Toggle Gasto/Ingreso buttons
-const typeButtons = document.querySelectorAll('.type-btn');
-typeButtons.forEach(btn => {
-    btn.addEventListener('click', () => {
-        typeButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        const type = btn.dataset.type;
-        const categorySelect = document.getElementById('category');
-
-        if (type === 'income') {
-            categorySelect.value = 'ingreso';
-        } else {
-            categorySelect.value = 'fijo'; // Default to fixed expense
-        }
-    });
-});
-
-elements.form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const data = {
-        fecha: elements.dateInput.value,
-        descripcion: document.getElementById('description').value,
-        monto: parseFloat(document.getElementById('amount').value),
-        tipo_manual: document.getElementById('category').value,
-        metodo_pago: document.getElementById('payment-method').value,
-        owner_manual: document.getElementById('owner').value
-    };
-
-    if (supabase) {
-        if (editingId) {
-            const { error } = await supabase
-                .from('transacciones')
-                .update(data)
-                .eq('id', editingId);
-
-            if (error) {
-                console.error('Error updating:', error);
-                alert('No se pudo guardar en la nube.');
-                return;
-            }
-        } else {
-            const { error } = await supabase
-                .from('transacciones')
-                .insert([data]);
-
-            if (error) {
-                console.error('Error inserting:', error);
-                alert('No se pudo guardar en la nube. Verifica si creaste las tablas.');
-                return;
-            }
-        }
-        await loadData();
-    } else {
-        // Fallback local
-        if (editingId) {
-            const index = transactions.findIndex(t => t.id === editingId);
-            if (index !== -1) transactions[index] = { ...transactions[index], ...data };
-        } else {
-            transactions.push({ id: Date.now(), ...data });
-        }
-        updateSummary();
-        renderBudgets();
-        renderTransactions();
-        renderFullLists();
-    }
-
-    elements.modal.style.display = 'none';
-    elements.form.reset();
-    editingId = null;
-});
-
-// Event Delegation for Transactions
-document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.btn-action');
-    if (!btn) return;
-
-    const id = btn.dataset.id; // Keep as string for UUID
-    const action = btn.dataset.action;
-
-    if (action === 'delete') deleteTransaction(id);
-    if (action === 'edit') openEditModal(id);
-});
 
 // Version: 1.0.2 - Supabase Integration Fix
 console.log('App v1.0.2 inicializando...');
@@ -724,20 +527,179 @@ console.log('App v1.0.2 inicializando...');
 // Initial Render and Loader
 function initApp() {
     try {
+        console.log('Iniciando elementos del DOM...');
+        initializeElements();
+
         console.log('Iniciando componentes UI...');
         populateFormSelects();
         updateHeaderFilters();
 
+        console.log('Adjuntando eventos...');
+        attachEventListeners();
+
         console.log('Solicitando datos a la nube...');
         loadData();
 
-        console.log('Aplicación lista.');
+        console.log('Aplicación v1.0.3 Lista.');
     } catch (err) {
         console.error('Error durante la inicialización:', err);
-        // Intentar renderizar lo básico al menos
+        alert('Error en la carga: ' + err.message);
         renderInitialUI();
     }
 }
 
-// Ejecutar directamente ya que el script está al final del body
+function attachEventListeners() {
+    // 1. Sidebar & Bottom Nav
+    const navLinks = [...elements.sidebarLinks, ...elements.bottomLinks];
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetView = link.dataset.view;
+            navLinks.forEach(l => l.classList.toggle('active', l.dataset.view === targetView));
+            elements.views.forEach(view => view.classList.toggle('active', view.id === `view-${targetView}`));
+            if (targetView === 'tarjetas') renderTarjetas();
+            if (targetView === 'ingresos' || targetView === 'gastos') renderFullLists();
+            if (targetView === 'configuraciones') renderSettings();
+        });
+    });
+
+    // 2. Profile Filter
+    elements.profileButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            elements.profileButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            activeFilter = btn.dataset.filter;
+            updateSummary();
+            renderBudgets();
+            renderTransactions();
+        });
+    });
+
+    // 3. Modal Controls
+    elements.addBtn.addEventListener('click', () => {
+        editingId = null;
+        elements.modalTitle.textContent = 'Nuevo Registro';
+        elements.editingIdInput.value = '';
+        elements.form.reset();
+        elements.modal.style.display = 'block';
+        elements.dateInput.value = new Date().toISOString().split('T')[0];
+    });
+
+    elements.closeBtn.addEventListener('click', () => {
+        elements.modal.style.display = 'none';
+    });
+
+    window.onclick = (event) => {
+        if (event.target == elements.modal) elements.modal.style.display = 'none';
+    };
+
+    // 4. Type Switcher (Income/Expense)
+    document.querySelectorAll('.type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const type = btn.dataset.type;
+            const categorySelect = document.getElementById('category');
+            categorySelect.value = (type === 'income') ? 'ingreso' : 'fijo';
+        });
+    });
+
+    // 5. Form Submit (CRUD)
+    elements.form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+            fecha: elements.dateInput.value,
+            descripcion: document.getElementById('description').value,
+            monto: parseFloat(document.getElementById('amount').value),
+            tipo_manual: document.getElementById('category').value,
+            metodo_pago: document.getElementById('payment-method').value,
+            owner_manual: document.getElementById('owner').value
+        };
+
+        if (supabase) {
+            try {
+                if (editingId) {
+                    await supabase.from('transacciones').update(data).eq('id', editingId);
+                } else {
+                    await supabase.from('transacciones').insert([data]);
+                }
+                await loadData();
+            } catch (err) {
+                console.error('Error Supabase:', err);
+                alert('Error al guardar en la nube.');
+            }
+        } else {
+            // Local fallback
+            if (editingId) {
+                const index = transactions.findIndex(t => t.id === editingId);
+                if (index !== -1) transactions[index] = { ...transactions[index], ...data };
+            } else {
+                transactions.push({ id: Date.now().toString(), ...data });
+            }
+            renderInitialUI();
+        }
+        elements.modal.style.display = 'none';
+        elements.form.reset();
+        editingId = null;
+    });
+
+    // 6. Inline Delete/Edit (Event Delegation)
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn-action');
+        if (!btn) return;
+        const id = btn.dataset.id;
+        const action = btn.dataset.action;
+        if (action === 'delete') deleteTransaction(id);
+        if (action === 'edit') openEditModal(id);
+    });
+
+    // 7. Settings Forms
+    elements.addBudgetForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const owner = document.getElementById('new-budget-owner').value;
+        const catId = document.getElementById('new-budget-cat').value;
+        const limit = parseFloat(document.getElementById('new-budget-limit').value);
+        const catName = configuration.categories.find(c => c.id === catId).name;
+        if (!budgets[owner]) budgets[owner] = [];
+        budgets[owner].push({ id: Date.now(), category: catId, limit: limit, name: `Gastos ${catName}` });
+        renderSettings();
+        renderBudgets();
+        updateSummary();
+        elements.addBudgetForm.reset();
+    });
+
+    elements.addCatForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('new-cat-id').value;
+        const name = document.getElementById('new-cat-name').value;
+        configuration.categories.push({ id, name });
+        renderSettings();
+        populateFormSelects();
+        elements.addCatForm.reset();
+    });
+
+    elements.addPayForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('new-pay-id').value;
+        const name = document.getElementById('new-pay-name').value;
+        configuration.paymentMethods.push({ id, name });
+        renderSettings();
+        populateFormSelects();
+        elements.addPayForm.reset();
+    });
+
+    elements.addOwnerForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const id = document.getElementById('new-owner-id').value;
+        const name = document.getElementById('new-owner-name').value;
+        configuration.owners.push({ id, name });
+        if (!budgets[id]) budgets[id] = [];
+        updateHeaderFilters();
+        renderSettings();
+        populateFormSelects();
+        elements.addOwnerForm.reset();
+    });
+}
+
+// Ejecutar init
 initApp();
