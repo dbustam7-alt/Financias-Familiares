@@ -1,4 +1,5 @@
-// Personal Finance Control - Core Logic
+alert('Script app.js cargando...');
+console.log('--- DIAGNÓSTICO INICIAL ---');
 const SUPABASE_URL = 'https://fvugphfurbdtpoldnfhs.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_GJmq_usXU18pNLBvesw3DQ_JHLwh0Xp';
 const supabase = window.supabase ?
@@ -701,5 +702,14 @@ function attachEventListeners() {
     });
 }
 
-// Ejecutar init
-initApp();
+// Version: 1.0.5 - Emergency Diagnostic
+console.log('Iniciando script v1.0.5...');
+alert('Iniciando app v1.0.5...');
+
+// Final safety execution
+try {
+    initApp();
+} catch (e) {
+    alert('FALLÓ initApp: ' + e.message);
+    console.error(e);
+}
