@@ -1,14 +1,13 @@
 // Personal Finance Control - Core Logic
+const SUPABASE_URL = 'https://fvugphfurbdtpoldnfhs.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_GJmq_usXU18pNLBvesw3DQ_JHLwh0Xp';
+const supabase = typeof supabase !== 'undefined' ?
+    window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
 /**
- * Data Management (Mocking Local Storage for Demo)
+ * Data Management (Sync with Supabase)
  */
-let transactions = [
-    { id: 1, date: '2026-03-21', description: 'Nómina Marzo Laura', amount: 5000000, category: 'ingreso', payment: 'debito', owner: 'laura' },
-    { id: 2, date: '2026-03-22', description: 'Arriendo', amount: 1500000, category: 'fijo', payment: 'debito', owner: 'familia' },
-    { id: 3, date: '2026-03-22', description: 'Tinto Juan Valdez', amount: 5500, category: 'hormiga', payment: 'efectivo', owner: 'david' },
-    { id: 4, date: '2026-03-22', description: 'Mercado Carulla', amount: 450000, category: 'variable', payment: 'tc_visa', owner: 'familia' },
-    { id: 5, date: '2026-03-22', description: 'Uber al trabajo', amount: 12000, category: 'hormiga', payment: 'tc_falabella', owner: 'laura' }
-];
+let transactions = [];
 
 let activeFilter = 'familia';
 let editingId = null;
@@ -95,6 +94,39 @@ const elements = {
     confirmDeleteBtn: document.getElementById('confirm-delete'),
     confirmCancelBtn: document.getElementById('confirm-cancel')
 };
+
+/**
+ * Supabase Data Integration
+ */
+async function loadData() {
+    if (!supabase) return;
+    const { data, error } = await supabase
+        .from('transacciones')
+        .select('*')
+        .order('fecha', { ascending: false });
+
+    if (error) {
+        console.error('Error loading data:', error);
+        return;
+    }
+
+    // Map DB fields back to App fields if necessary
+    // Schema: id, descripcion, monto, fecha, metodo_pago, categoria_id, usuario_id (owner)
+    transactions = data.map(t => ({
+        id: t.id,
+        date: t.fecha,
+        description: t.descripcion,
+        amount: parseFloat(t.monto),
+        category: t.tipo_manual || 'variable', // Handle mapping if needed
+        payment: t.metodo_pago,
+        owner: t.owner_manual || 'familia' // Handle mapping
+    }));
+
+    updateSummary();
+    renderTransactions();
+    renderBudgets();
+    renderFullLists();
+}
 
 /**
  * Core Functions
@@ -232,8 +264,21 @@ function deleteTransaction(id) {
 }
 
 // Confirm Modal Actions
-elements.confirmDeleteBtn.addEventListener('click', () => {
+elements.confirmDeleteBtn.addEventListener('click', async () => {
     if (transactionToDelete) {
+        if (supabase) {
+            const { error } = await supabase
+                .from('transacciones')
+                .delete()
+                .eq('id', transactionToDelete);
+
+            if (error) {
+                console.error('Error deleting:', error);
+                alert('No se pudo eliminar de la nube. Intenta de nuevo.');
+                return;
+            }
+        }
+
         transactions = transactions.filter(t => t.id !== transactionToDelete);
         updateSummary();
         renderTransactions();
@@ -582,34 +627,55 @@ typeButtons.forEach(btn => {
     });
 });
 
-elements.form.addEventListener('submit', (e) => {
+elements.form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const data = {
-        date: elements.dateInput.value,
-        description: document.getElementById('description').value,
-        amount: parseFloat(document.getElementById('amount').value),
-        category: document.getElementById('category').value,
-        payment: document.getElementById('payment-method').value,
-        owner: document.getElementById('owner').value
+        fecha: elements.dateInput.value,
+        descripcion: document.getElementById('description').value,
+        monto: parseFloat(document.getElementById('amount').value),
+        tipo_manual: document.getElementById('category').value,
+        metodo_pago: document.getElementById('payment-method').value,
+        owner_manual: document.getElementById('owner').value
     };
 
-    if (editingId) {
-        const index = transactions.findIndex(t => t.id === editingId);
-        if (index !== -1) {
-            transactions[index] = { ...transactions[index], ...data };
-        }
-    } else {
-        transactions.push({
-            id: Date.now(),
-            ...data
-        });
-    }
+    if (supabase) {
+        if (editingId) {
+            const { error } = await supabase
+                .from('transacciones')
+                .update(data)
+                .eq('id', editingId);
 
-    updateSummary();
-    renderBudgets();
-    renderTransactions();
-    renderFullLists();
+            if (error) {
+                console.error('Error updating:', error);
+                alert('No se pudo guardar en la nube.');
+                return;
+            }
+        } else {
+            const { error } = await supabase
+                .from('transacciones')
+                .insert([data]);
+
+            if (error) {
+                console.error('Error inserting:', error);
+                alert('No se pudo guardar en la nube. Verifica si creaste las tablas.');
+                return;
+            }
+        }
+        await loadData();
+    } else {
+        // Fallback local
+        if (editingId) {
+            const index = transactions.findIndex(t => t.id === editingId);
+            if (index !== -1) transactions[index] = { ...transactions[index], ...data };
+        } else {
+            transactions.push({ id: Date.now(), ...data });
+        }
+        updateSummary();
+        renderBudgets();
+        renderTransactions();
+        renderFullLists();
+    }
 
     elements.modal.style.display = 'none';
     elements.form.reset();
@@ -621,7 +687,7 @@ document.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-action');
     if (!btn) return;
 
-    const id = parseInt(btn.dataset.id);
+    const id = btn.dataset.id; // Keep as string for UUID
     const action = btn.dataset.action;
 
     if (action === 'delete') deleteTransaction(id);
@@ -630,6 +696,4 @@ document.addEventListener('click', (e) => {
 
 // Initial Render
 populateFormSelects();
-updateSummary();
-renderBudgets();
-renderTransactions();
+loadData(); // This now handles initial render from Supabase
