@@ -521,8 +521,8 @@ function renderTransactions() {
 
 
 
-// Version: 1.0.2 - Supabase Integration Fix
-console.log('App v1.0.2 inicializando...');
+// Version: 1.0.4 - Structural Stability Fix
+console.log('App v1.0.4 inicializando...');
 
 // Initial Render and Loader
 function initApp() {
@@ -540,7 +540,7 @@ function initApp() {
         console.log('Solicitando datos a la nube...');
         loadData();
 
-        console.log('Aplicación v1.0.3 Lista.');
+        console.log('Aplicación v1.0.4 Lista.');
     } catch (err) {
         console.error('Error durante la inicialización:', err);
         alert('Error en la carga: ' + err.message);
