@@ -11,6 +11,7 @@ let transactions = [
 ];
 
 let activeFilter = 'familia';
+let editingId = null;
 
 const cardBudgets = [
     { id: 'visa', name: 'TC Visa', limit: 2000000 },
@@ -76,6 +77,9 @@ const elements = {
     modal: document.getElementById('quick-add-modal'),
     addBtn: document.getElementById('quick-add-btn'),
     closeBtn: document.querySelector('.close-modal'),
+    dateInput: document.getElementById('date'),
+    modalTitle: document.getElementById('modal-title'),
+    editingIdInput: document.getElementById('editing-id'),
     form: document.getElementById('transaction-form'),
     // Settings elements
     settingsBudgets: document.getElementById('settings-budgets-list'),
@@ -86,7 +90,10 @@ const elements = {
     addCatForm: document.getElementById('add-category-form'),
     addPayForm: document.getElementById('add-payment-form'),
     addOwnerForm: document.getElementById('add-owner-form'),
-    bottomLinks: document.querySelectorAll('.bottom-nav a')
+    bottomLinks: document.querySelectorAll('.bottom-nav a'),
+    confirmModal: document.getElementById('confirm-modal'),
+    confirmDeleteBtn: document.getElementById('confirm-delete'),
+    confirmCancelBtn: document.getElementById('confirm-cancel')
 };
 
 /**
@@ -204,16 +211,71 @@ function renderFullLists() {
     // Fill Ingresos
     elements.ingresosList.innerHTML = '';
     filtered.filter(t => t.category === 'ingreso').forEach(t => {
-        const div = createTransactionItem(t);
-        elements.ingresosList.appendChild(div);
+        elements.ingresosList.appendChild(createTransactionItem(t, true));
     });
 
     // Fill Gastos
     elements.gastosList.innerHTML = '';
     filtered.filter(t => t.category !== 'ingreso').forEach(t => {
-        const div = createTransactionItem(t);
-        elements.gastosList.appendChild(div);
+        elements.gastosList.appendChild(createTransactionItem(t, true));
     });
+
+    if (window.lucide) lucide.createIcons();
+}
+
+let transactionToDelete = null;
+
+function deleteTransaction(id) {
+    transactionToDelete = id;
+    elements.confirmModal.style.display = 'block';
+    if (window.lucide) lucide.createIcons();
+}
+
+// Confirm Modal Actions
+elements.confirmDeleteBtn.addEventListener('click', () => {
+    if (transactionToDelete) {
+        transactions = transactions.filter(t => t.id !== transactionToDelete);
+        updateSummary();
+        renderTransactions();
+        renderBudgets();
+        renderFullLists();
+        elements.confirmModal.style.display = 'none';
+        elements.modal.style.display = 'none';
+        transactionToDelete = null;
+    }
+});
+
+elements.confirmCancelBtn.addEventListener('click', () => {
+    elements.confirmModal.style.display = 'none';
+    transactionToDelete = null;
+});
+
+function openEditModal(id) {
+    const t = transactions.find(trans => trans.id === id);
+    if (!t) return;
+
+    editingId = id;
+    elements.modalTitle.textContent = 'Editar Registro';
+    elements.editingIdInput.value = id;
+
+    // Fill form
+    elements.dateInput.value = t.date;
+    document.getElementById('amount').value = t.amount;
+    document.getElementById('description').value = t.description;
+    document.getElementById('category').value = t.category;
+    document.getElementById('payment-method').value = t.payment;
+    document.getElementById('owner').value = t.owner;
+
+    // Toggle button UI to match category
+    const typeButtons = document.querySelectorAll('.type-btn');
+    typeButtons.forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.type === (t.category === 'ingreso' ? 'income' : 'expense')) {
+            btn.classList.add('active');
+        }
+    });
+
+    elements.modal.style.display = 'block';
 }
 
 function renderSettings() {
@@ -331,18 +393,38 @@ function populateFormSelects() {
     ownerSelect.innerHTML = configuration.owners.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
 }
 
-function createTransactionItem(t) {
+function createTransactionItem(t, isWide = false) {
     const div = document.createElement('div');
-    div.className = 'transaction-item';
-    div.innerHTML = `
-        <div class="transaction-info">
-            <h4>${t.description} <span class="badge-owner" style="font-size: 0.7rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${t.owner}</span></h4>
-            <p>${t.date} • ${t.payment}</p>
-        </div>
-        <span class="amount ${t.category === 'ingreso' ? 'income' : 'expense'}">
-            ${t.category === 'ingreso' ? '+' : '-'}${formatCurrency(t.amount)}
-        </span>
-    `;
+    div.className = `transaction-item ${isWide ? 'wide-item' : ''}`;
+
+    if (isWide) {
+        div.innerHTML = `
+            <span class="date">${t.date}</span>
+            <span class="desc" style="font-weight: 500;">${t.description}</span>
+            <span class="badge" style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem;">${t.category}</span>
+            <span class="payment" style="color: var(--text-muted); font-size: 0.85rem;">${t.payment}</span>
+            <span class="owner"><span class="badge-owner" style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem;">${t.owner}</span></span>
+            <span class="amount ${t.category === 'ingreso' ? 'income' : t.category === 'hormiga' ? 'hormiga' : 'expense'}" style="text-align: right; font-weight: 600;">
+                ${t.category === 'ingreso' ? '+' : '-'}${formatCurrency(t.amount)}
+            </span>
+            <div class="actions">
+                <button class="btn-action edit" data-id="${t.id}" data-action="edit"><i data-lucide="edit-2"></i></button>
+                <button class="btn-action delete" data-id="${t.id}" data-action="delete"><i data-lucide="trash-2"></i></button>
+            </div>
+        `;
+    } else {
+        div.innerHTML = `
+            <div class="transaction-info">
+                <h4>${t.description} <span class="badge-owner" style="font-size: 0.7rem; background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">${t.owner}</span></h4>
+                <p>${t.date} • ${t.payment}</p>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span class="amount ${t.category === 'ingreso' ? 'income' : 'expense'}" style="font-weight: 600;">
+                    ${t.category === 'ingreso' ? '+' : '-'}${formatCurrency(t.amount)}
+                </span>
+            </div>
+        `;
+    }
     return div;
 }
 
@@ -353,26 +435,24 @@ function renderTransactions() {
         : transactions.filter(t => t.owner === activeFilter || t.owner === 'familia');
 
     [...filtered].reverse().slice(0, 5).forEach(t => {
-        const div = document.createElement('div');
-        div.className = 'transaction-item';
-        div.innerHTML = `
-            <div class="transaction-info">
-                <h4>${t.description}</h4>
-                <p>${t.category.charAt(0).toUpperCase() + t.category.slice(1)} • ${t.payment}</p>
-            </div>
-            <span class="amount ${t.category === 'ingreso' ? 'income' : 'expense'}">
-                ${t.category === 'ingreso' ? '+' : '-'}${formatCurrency(t.amount)}
-            </span>
-        `;
-        elements.transactionList.appendChild(div);
+        elements.transactionList.appendChild(createTransactionItem(t, false));
     });
+
+    if (window.lucide) lucide.createIcons();
 }
 
 /**
  * Event Listeners
  */
 elements.addBtn.addEventListener('click', () => {
+    editingId = null;
+    elements.modalTitle.textContent = 'Nuevo Registro';
+    elements.editingIdInput.value = '';
+    elements.form.reset();
     elements.modal.style.display = 'block';
+    // Set default date to today
+    const today = new Date().toISOString().split('T')[0];
+    elements.dateInput.value = today;
 });
 
 elements.closeBtn.addEventListener('click', () => {
@@ -505,9 +585,8 @@ typeButtons.forEach(btn => {
 elements.form.addEventListener('submit', (e) => {
     e.preventDefault();
 
-    const newTransaction = {
-        id: Date.now(),
-        date: new Date().toISOString().split('T')[0],
+    const data = {
+        date: elements.dateInput.value,
         description: document.getElementById('description').value,
         amount: parseFloat(document.getElementById('amount').value),
         category: document.getElementById('category').value,
@@ -515,14 +594,38 @@ elements.form.addEventListener('submit', (e) => {
         owner: document.getElementById('owner').value
     };
 
-    transactions.push(newTransaction);
+    if (editingId) {
+        const index = transactions.findIndex(t => t.id === editingId);
+        if (index !== -1) {
+            transactions[index] = { ...transactions[index], ...data };
+        }
+    } else {
+        transactions.push({
+            id: Date.now(),
+            ...data
+        });
+    }
 
     updateSummary();
     renderBudgets();
     renderTransactions();
+    renderFullLists();
 
     elements.modal.style.display = 'none';
     elements.form.reset();
+    editingId = null;
+});
+
+// Event Delegation for Transactions
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-action');
+    if (!btn) return;
+
+    const id = parseInt(btn.dataset.id);
+    const action = btn.dataset.action;
+
+    if (action === 'delete') deleteTransaction(id);
+    if (action === 'edit') openEditModal(id);
 });
 
 // Initial Render
