@@ -1,8 +1,10 @@
 // Personal Finance Control - Core Logic
 const SUPABASE_URL = 'https://fvugphfurbdtpoldnfhs.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_GJmq_usXU18pNLBvesw3DQ_JHLwh0Xp';
-const supabase = typeof supabase !== 'undefined' ?
+const supabase = window.supabase ?
     window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+console.log('Supabase initialized:', !!supabase);
 
 /**
  * Data Management (Sync with Supabase)
