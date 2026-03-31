@@ -718,10 +718,26 @@ document.addEventListener('click', (e) => {
     if (action === 'edit') openEditModal(id);
 });
 
+// Version: 1.0.2 - Supabase Integration Fix
+console.log('App v1.0.2 inicializando...');
+
 // Initial Render and Loader
-document.addEventListener('DOMContentLoaded', () => {
-    populateFormSelects();
-    updateHeaderFilters();
-    loadData();
-    console.log('Aplicación cargada y lista.');
-});
+function initApp() {
+    try {
+        console.log('Iniciando componentes UI...');
+        populateFormSelects();
+        updateHeaderFilters();
+
+        console.log('Solicitando datos a la nube...');
+        loadData();
+
+        console.log('Aplicación lista.');
+    } catch (err) {
+        console.error('Error durante la inicialización:', err);
+        // Intentar renderizar lo básico al menos
+        renderInitialUI();
+    }
+}
+
+// Ejecutar directamente ya que el script está al final del body
+initApp();
