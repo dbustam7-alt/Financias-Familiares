@@ -9,7 +9,10 @@ console.log('Supabase initialized:', !!supabase);
 /**
  * Data Management (Sync with Supabase)
  */
-let transactions = [];
+let transactions = [
+    { id: '1', date: '2026-03-21', description: 'Nómina Marzo Laura', amount: 5000000, category: 'ingreso', payment: 'debito', owner: 'laura' },
+    { id: '2', date: '2026-03-22', description: 'Arriendo', amount: 1500000, category: 'fijo', payment: 'debito', owner: 'familia' }
+];
 
 let activeFilter = 'familia';
 let editingId = null;
@@ -101,29 +104,48 @@ const elements = {
  * Supabase Data Integration
  */
 async function loadData() {
-    if (!supabase) return;
-    const { data, error } = await supabase
-        .from('transacciones')
-        .select('*')
-        .order('fecha', { ascending: false });
+    try {
+        if (!supabase) {
+            console.warn('Supabase no está inicializado. Usando datos locales temporales.');
+            renderInitialUI();
+            return;
+        }
 
-    if (error) {
-        console.error('Error loading data:', error);
-        return;
+        const { data, error } = await supabase
+            .from('transacciones')
+            .select('*')
+            .order('fecha', { ascending: false });
+
+        if (error) {
+            console.error('Error loading data from Supabase:', error);
+            renderInitialUI();
+            return;
+        }
+
+        if (data && data.length > 0) {
+            transactions = data.map(t => ({
+                id: t.id,
+                date: t.fecha,
+                description: t.descripcion,
+                amount: parseFloat(t.monto),
+                category: t.tipo_manual || 'variable',
+                payment: t.metodo_pago,
+                owner: t.owner_manual || 'familia'
+            }));
+        } else {
+            console.log('No se encontraron transacciones en la nube. Usando lista inicial.');
+            // Si la base de datos está vacía, podríamos querer cargar datos semilla
+            // transactions = [...seedData]; 
+        }
+
+        renderInitialUI();
+    } catch (err) {
+        console.error('Error crítico en loadData:', err);
+        renderInitialUI();
     }
+}
 
-    // Map DB fields back to App fields if necessary
-    // Schema: id, descripcion, monto, fecha, metodo_pago, categoria_id, usuario_id (owner)
-    transactions = data.map(t => ({
-        id: t.id,
-        date: t.fecha,
-        description: t.descripcion,
-        amount: parseFloat(t.monto),
-        category: t.tipo_manual || 'variable', // Handle mapping if needed
-        payment: t.metodo_pago,
-        owner: t.owner_manual || 'familia' // Handle mapping
-    }));
-
+function renderInitialUI() {
     updateSummary();
     renderTransactions();
     renderBudgets();
@@ -696,6 +718,10 @@ document.addEventListener('click', (e) => {
     if (action === 'edit') openEditModal(id);
 });
 
-// Initial Render
-populateFormSelects();
-loadData(); // This now handles initial render from Supabase
+// Initial Render and Loader
+document.addEventListener('DOMContentLoaded', () => {
+    populateFormSelects();
+    updateHeaderFilters();
+    loadData();
+    console.log('Aplicación cargada y lista.');
+});
