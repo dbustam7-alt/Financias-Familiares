@@ -1,203 +1,61 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Control Financiero Personal | DataxIA</title>
-    <link rel="stylesheet" href="index.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Finanzas Familiares</title>
     
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <style>
-        #auth-overlay {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #f8fafc;
-            z-index: 9999;
-            font-family: 'Inter', sans-serif;
+    <script>
+        const SUPABASE_URL = 'https://fvugphfurbdtpoldnfhs.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_GJmq_usXU18pNLBvesw3DQ_JHLwh0Xp';
+        
+        // Creamos el cliente apenas carga el navegador
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Función de login obligatoria
+        async function login() {
+            console.log("Botón detectado");
+            const { error } = await supabaseClient.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + window.location.pathname
+                }
+            });
+            if (error) alert("Error: " + error.message);
         }
-        .login-card {
-            background: white;
-            padding: 40px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-            text-align: center;
-            max-width: 350px;
-            width: 90%;
-        }
-        #btn-google {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            padding: 12px;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.2s;
-            margin-top: 20px;
-        }
-        #btn-google:hover {
-            background: #f1f5f9;
-            transform: translateY(-1px);
-        }
-        .app-container {
-            display: none;
-        }
-    </style>
+
+        // Vigilante de sesión
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                document.getElementById('auth-overlay').style.display = 'none';
+                document.getElementById('main-app').style.display = 'flex';
+            }
+        });
+    </script>
+
+    <link rel="stylesheet" href="index.css">
 </head>
 
 <body>
-    <div id="auth-overlay">
-        <div class="login-card">
-            <i data-lucide="wallet" style="width: 48px; height: 48px; color: #2563eb; margin: 0 auto 16px;"></i>
-            <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; color: #1e293b;">Finanzas Familiares</h1>
-            <p style="color: #64748b; font-size: 0.9rem;">Gestiona tu presupuesto con DataxIA</p>
-            <button id="btn-google" onclick="login()">
-                <img src="https://www.google.com/favicon.ico" alt="G" style="width:18px; margin-right:12px;">
+    <div id="auth-overlay" style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 9999;">
+        <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center;">
+            <h1 style="margin-bottom: 20px;">Finanzas Familiares</h1>
+            <button onclick="login()" style="padding: 12px 24px; cursor: pointer; display: flex; align-items: center; gap: 10px; border: 1px solid #ddd; background: white; border-radius: 8px;">
+                <img src="https://www.google.com/favicon.ico" width="18">
                 Continuar con Google
             </button>
         </div>
     </div>
 
-    <div class="app-container" id="main-app">
-        <aside class="sidebar">
-            <div class="logo">
-                <i data-lucide="wallet"></i>
-                <span>Finanzas</span>
-            </div>
-            <nav id="sidebar-nav">
-                <a href="#" class="active" data-view="dashboard"><i data-lucide="layout-dashboard"></i> Dashboard</a>
-                <a href="#" data-view="ingresos"><i data-lucide="arrow-up-right"></i> Ingresos</a>
-                <a href="#" data-view="gastos"><i data-lucide="arrow-down-left"></i> Gastos</a>
-                <a href="#" data-view="configuraciones"><i data-lucide="settings"></i> Ajustes</a>
-            </nav>
-            <div style="padding: 20px; margin-top: auto;">
-                <button onclick="logout()" style="background: none; border: none; color: #ef4444; cursor: pointer; display: flex; align-items: center; gap: 8px;">
-                    <i data-lucide="log-out" style="width: 18px;"></i> Salir
-                </button>
-            </div>
-        </aside>
-
-        <main class="main-content">
-            <header class="top-header">
-                <div class="header-info">
-                    <h1>Control de Finanzas</h1>
-                    <div class="profile-filter" id="profile-selector">
-                        <button class="filter-btn active" data-filter="familia">Familia</button>
-                        <button class="filter-btn" data-filter="laura">Laura</button>
-                        <button class="filter-btn" data-filter="david">David</button>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <button id="quick-add-btn" class="btn btn-primary">
-                        <i data-lucide="plus"></i> Registro Rápido
-                    </button>
-                </div>
-            </header>
-
-            <div id="view-dashboard" class="view active">
-                <section class="summary-section">
-                    <div class="card card-summary income">
-                        <div class="card-data">
-                            <span class="label">Ingresos</span>
-                            <h2 id="total-income">$0</h2>
-                        </div>
-                    </div>
-                    <div class="card card-summary expenses">
-                        <div class="card-data">
-                            <span class="label">Gastos</span>
-                            <h2 id="total-expenses">$0</h2>
-                        </div>
-                    </div>
-                    <div class="card card-summary balance highlighted">
-                        <div class="card-data">
-                            <span class="label">Disponible</span>
-                            <h2 id="available-balance">$0</h2>
-                        </div>
-                    </div>
-                </section>
-
-                <section class="dashboard-grid">
-                    <div class="card card-large">
-                        <div class="card-header"><h3>Presupuesto</h3></div>
-                        <div class="budget-list" id="budget-visualization"></div>
-                    </div>
-                    <div class="card card-small">
-                        <div class="card-header"><h3>Recientes</h3></div>
-                        <div class="transaction-list" id="recent-transactions"></div>
-                    </div>
-                </section>
-            </div>
-        </main>
+    <div id="main-app" style="display: none; flex-direction: column; padding: 20px;">
+        <h2>¡Bienvenido al Dashboard!</h2>
+        <p>Si ves esto, el login funcionó.</p>
+        <button onclick="supabaseClient.auth.signOut().then(() => location.reload())">Cerrar Sesión</button>
     </div>
 
-    <div id="quick-add-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Nuevo Registro</h2>
-                <button class="close-modal">&times;</button>
-            </div>
-            <form id="transaction-form">
-                <div class="form-group">
-                    <label>Fecha</label>
-                    <input type="date" id="date" required>
-                </div>
-                <div class="form-group">
-                    <label>Monto</label>
-                    <input type="number" id="amount" required>
-                </div>
-                <div class="form-group">
-                    <label>Descripción</label>
-                    <input type="text" id="description" required>
-                </div>
-                <div class="form-group">
-                    <label>Categoría</label>
-                    <select id="category" required>
-                        <option value="fijo">Fijo</option>
-                        <option value="variable">Variable</option>
-                        <option value="hormiga">Hormiga</option>
-                        <option value="ingreso">Ingreso</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Método de Pago</label>
-                    <select id="payment-method" required>
-                        <option value="efectivo">Efectivo</option>
-                        <option value="debito">Débito</option>
-                        <option value="tc_visa">TC Visa</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Propietario</label>
-                    <select id="owner" required>
-                        <option value="familia">Familia</option>
-                        <option value="laura">Laura</option>
-                        <option value="david">David</option>
-                    </select>
-                </div>
-                <button type="submit" class="btn btn-full" style="background:#2563eb; color:white; width:100%; padding:10px; border-radius:8px; border:none; margin-top:10px; cursor:pointer;">Guardar</button>
-            </form>
-        </div>
-    </div>
-
-    <script src="./app.js"></script>
-    <script>
-        lucide.createIcons();
-    </script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>lucide.createIcons();</script>
 </body>
 </html>
