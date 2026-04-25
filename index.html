@@ -14,7 +14,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        /* Estilos rápidos para la pantalla de bloqueo */
         #auth-overlay {
             display: flex;
             flex-direction: column;
@@ -57,7 +56,7 @@
             transform: translateY(-1px);
         }
         .app-container {
-            display: none; /* Se activa por JS tras el login */
+            display: none;
         }
     </style>
 </head>
@@ -67,7 +66,7 @@
         <div class="login-card">
             <i data-lucide="wallet" style="width: 48px; height: 48px; color: #2563eb; margin: 0 auto 16px;"></i>
             <h1 style="font-family: 'Outfit', sans-serif; font-size: 1.5rem; color: #1e293b;">Finanzas Familiares</h1>
-            <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 8px;">Gestiona el presupuesto familiar con IA</p>
+            <p style="color: #64748b; font-size: 0.9rem;">Gestiona tu presupuesto con DataxIA</p>
             <button id="btn-google" onclick="login()">
                 <img src="https://www.google.com/favicon.ico" alt="G" style="width:18px; margin-right:12px;">
                 Continuar con Google
@@ -78,14 +77,13 @@
     <div class="app-container" id="main-app">
         <aside class="sidebar">
             <div class="logo">
-                <i data-lucide="wallet" class="logo-icon"></i>
+                <i data-lucide="wallet"></i>
                 <span>Finanzas</span>
             </div>
             <nav id="sidebar-nav">
                 <a href="#" class="active" data-view="dashboard"><i data-lucide="layout-dashboard"></i> Dashboard</a>
                 <a href="#" data-view="ingresos"><i data-lucide="arrow-up-right"></i> Ingresos</a>
                 <a href="#" data-view="gastos"><i data-lucide="arrow-down-left"></i> Gastos</a>
-                <a href="#" data-view="tarjetas"><i data-lucide="credit-card"></i> Tarjetas</a>
                 <a href="#" data-view="configuraciones"><i data-lucide="settings"></i> Ajustes</a>
             </nav>
             <div style="padding: 20px; margin-top: auto;">
@@ -115,20 +113,91 @@
             <div id="view-dashboard" class="view active">
                 <section class="summary-section">
                     <div class="card card-summary income">
-                        <div class="card-icon"><i data-lucide="trending-up"></i></div>
                         <div class="card-data">
-                            <span class="label">Ingresos Totales</span>
+                            <span class="label">Ingresos</span>
                             <h2 id="total-income">$0</h2>
                         </div>
                     </div>
                     <div class="card card-summary expenses">
-                        <div class="card-icon"><i data-lucide="trending-down"></i></div>
                         <div class="card-data">
-                            <span class="label">Gastos Totales</span>
+                            <span class="label">Gastos</span>
                             <h2 id="total-expenses">$0</h2>
                         </div>
                     </div>
                     <div class="card card-summary balance highlighted">
-                        <div class="card-icon"><i data-lucide="banknote"></i></div>
                         <div class="card-data">
-                            <span class="label">
+                            <span class="label">Disponible</span>
+                            <h2 id="available-balance">$0</h2>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="dashboard-grid">
+                    <div class="card card-large">
+                        <div class="card-header"><h3>Presupuesto</h3></div>
+                        <div class="budget-list" id="budget-visualization"></div>
+                    </div>
+                    <div class="card card-small">
+                        <div class="card-header"><h3>Recientes</h3></div>
+                        <div class="transaction-list" id="recent-transactions"></div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div id="quick-add-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nuevo Registro</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="transaction-form">
+                <div class="form-group">
+                    <label>Fecha</label>
+                    <input type="date" id="date" required>
+                </div>
+                <div class="form-group">
+                    <label>Monto</label>
+                    <input type="number" id="amount" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <input type="text" id="description" required>
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="category" required>
+                        <option value="fijo">Fijo</option>
+                        <option value="variable">Variable</option>
+                        <option value="hormiga">Hormiga</option>
+                        <option value="ingreso">Ingreso</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Método de Pago</label>
+                    <select id="payment-method" required>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="debito">Débito</option>
+                        <option value="tc_visa">TC Visa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Propietario</label>
+                    <select id="owner" required>
+                        <option value="familia">Familia</option>
+                        <option value="laura">Laura</option>
+                        <option value="david">David</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-full" style="background:#2563eb; color:white; width:100%; padding:10px; border-radius:8px; border:none; margin-top:10px; cursor:pointer;">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
