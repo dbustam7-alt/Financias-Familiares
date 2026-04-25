@@ -2,60 +2,57 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Finanzas Familiares</title>
-    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; background: #f0f2f5; }
+        .card { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); text-align: center; }
+        button { padding: 10px 20px; cursor: pointer; background: white; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen" class="card">
+        <h1>Finanzas Familiares</h1>
+        <p>Inicia sesión para continuar</p>
+        <button onclick="loginConGoogle()">
+            <img src="https://www.google.com/favicon.ico" width="16" style="margin-right:8px">
+            Continuar con Google
+        </button>
+    </div>
+
+    <div id="app-screen" class="card" style="display:none">
+        <h1>¡Hola!</h1>
+        <p id="user-email"></p>
+        <button onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
 
     <script>
         const SUPABASE_URL = 'https://fvugphfurbdtpoldnfhs.supabase.co';
         const SUPABASE_KEY = 'sb_publishable_GJmq_usXU18pNLBvesw3DQ_JHLwh0Xp';
-        
-        // Creamos el cliente apenas carga el navegador
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        // Función de login obligatoria
-        async function login() {
-            console.log("Botón detectado");
-            const { error } = await supabaseClient.auth.signInWithOAuth({
+        async function loginConGoogle() {
+            const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
-                options: {
-                    redirectTo: window.location.origin + window.location.pathname
-                }
+                options: { redirectTo: window.location.origin + window.location.pathname }
             });
-            if (error) alert("Error: " + error.message);
+            if (error) alert("Error al conectar: " + error.message);
         }
 
-        // Vigilante de sesión
-        supabaseClient.auth.onAuthStateChange((event, session) => {
+        async function cerrarSesion() {
+            await supabase.auth.signOut();
+            window.location.reload();
+        }
+
+        // VIGILANTE DE SESIÓN (Esto es lo que llena la tabla de Users)
+        supabase.auth.onAuthStateChange((event, session) => {
             if (session) {
-                document.getElementById('auth-overlay').style.display = 'none';
-                document.getElementById('main-app').style.display = 'flex';
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('app-screen').style.display = 'block';
+                document.getElementById('user-email').innerText = "Conectado como: " + session.user.email;
             }
         });
     </script>
-
-    <link rel="stylesheet" href="index.css">
-</head>
-
-<body>
-    <div id="auth-overlay" style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #f8fafc; z-index: 9999;">
-        <div style="background: white; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center;">
-            <h1 style="margin-bottom: 20px;">Finanzas Familiares</h1>
-            <button onclick="login()" style="padding: 12px 24px; cursor: pointer; display: flex; align-items: center; gap: 10px; border: 1px solid #ddd; background: white; border-radius: 8px;">
-                <img src="https://www.google.com/favicon.ico" width="18">
-                Continuar con Google
-            </button>
-        </div>
-    </div>
-
-    <div id="main-app" style="display: none; flex-direction: column; padding: 20px;">
-        <h2>¡Bienvenido al Dashboard!</h2>
-        <p>Si ves esto, el login funcionó.</p>
-        <button onclick="supabaseClient.auth.signOut().then(() => location.reload())">Cerrar Sesión</button>
-    </div>
-
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>lucide.createIcons();</script>
 </body>
 </html>
